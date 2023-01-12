@@ -18,6 +18,7 @@
   },
   "devDependencies": {
     "@eslint/create-config": "^0.4.2",
+    "@faker-js/faker": "^7.6.0",
     "@types/jest": "^29.2.5",
     "@types/react": "^18.0.26",
     "@types/react-dom": "^18.0.9",
