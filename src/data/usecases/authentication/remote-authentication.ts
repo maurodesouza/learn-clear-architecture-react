@@ -1,5 +1,8 @@
-import { AuthenticationParams } from '../../../domain/usecase/authentication';
-import { HttpPostClient } from '../../protocols/http/http-post-client';
+import { AuthenticationParams } from '@/domain/usecase/authentication';
+import { HttpPostClient } from '@/data/protocols/http/http-post-client';
+import { HttpStatusCode } from '@/data/protocols/http/http-response';
+import { InvalidCredentialsError } from '@/domain/errors/invalid-credentials-error';
+import { UnexpectedError } from '@/domain/errors/unexpected-erro';
 
 class RemoveAuthentication {
   constructor(
@@ -13,7 +16,18 @@ class RemoveAuthentication {
       body: params,
     };
 
-    await this.httpPostClient.post(args);
+    const response = await this.httpPostClient.post(args);
+
+    switch (response.statusCode) {
+      case HttpStatusCode.ok:
+        break;
+
+      case HttpStatusCode.unathorized:
+        throw new InvalidCredentialsError();
+
+      default:
+        throw new UnexpectedError();
+    }
   }
 }
 
