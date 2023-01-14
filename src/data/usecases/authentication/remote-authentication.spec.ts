@@ -1,19 +1,24 @@
 import { faker } from '@faker-js/faker';
-import { mockAuthentication } from '@/domain/test/mock-authntication';
-
-import { HttpPostClientSpy } from '@/data/test/mock-http-client';
 import { RemoveAuthentication } from './remote-authentication';
-import { InvalidCredentialsError } from '@/domain/errors/invalid-credentials-error';
-import { HttpStatusCode } from '@/data/protocols/http/http-response';
-import { UnexpectedError } from '@/domain/errors/unexpected-erro';
+
+import { AccountModel } from '@/domain/models';
+import { AuthenticationParams } from '@/domain/usecase';
+import { mockAccount, mockAuthentication } from '@/domain/test';
+import { InvalidCredentialsError, UnexpectedError } from '@/domain/errors';
+import { HttpPostClientSpy } from '@/data/test';
+import { HttpStatusCode } from '@/data/protocols/http';
 
 type SutTypes = {
   sut: RemoveAuthentication;
-  httpPostClientSpy: HttpPostClientSpy;
+  httpPostClientSpy: HttpPostClientSpy<AuthenticationParams, AccountModel>;
 };
 
 const makeSut = (url = faker.internet.url()): SutTypes => {
-  const httpPostClientSpy = new HttpPostClientSpy();
+  const httpPostClientSpy = new HttpPostClientSpy<
+    AuthenticationParams,
+    AccountModel
+  >();
+
   const sut = new RemoveAuthentication(url, httpPostClientSpy);
 
   return {
@@ -43,7 +48,7 @@ describe('RemoteAuthntication', () => {
     const { sut, httpPostClientSpy } = makeSut();
 
     httpPostClientSpy.response = {
-      statusCode: HttpStatusCode.unathorized,
+      statusCode: HttpStatusCode.unauthorized,
     };
 
     const promise = sut.auth(mockAuthentication());
@@ -81,5 +86,18 @@ describe('RemoteAuthntication', () => {
 
     const promise = sut.auth(mockAuthentication());
     await expect(promise).rejects.toThrow(new UnexpectedError());
+  });
+
+  it('should return an account model if http post client returns 200', async () => {
+    const { sut, httpPostClientSpy } = makeSut();
+    const httpResponse = mockAccount();
+
+    httpPostClientSpy.response = {
+      statusCode: HttpStatusCode.ok,
+      body: httpResponse,
+    };
+
+    const result = await sut.auth(mockAuthentication());
+    expect(result).toBe(httpResponse);
   });
 });
